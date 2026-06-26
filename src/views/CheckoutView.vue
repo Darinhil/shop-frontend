@@ -186,7 +186,7 @@
                 <div class="flex-1 min-w-0">
                   <p class="font-medium text-slate-800 text-sm truncate">{{ item.product_name }}</p>
                   <p class="text-xs text-slate-500">Qty: {{ item.quantity }}</p>
-                  <p class="font-bold text-primary-600">${{ (item.price * item.quantity).toFixed(2) }}</p>
+                  <p class="font-bold text-primary-600">${{ formatPrice(item.price * item.quantity) }}</p>
                 </div>
               </div>
             </div>
@@ -194,23 +194,23 @@
             <div class="space-y-4 mb-6 pt-4 border-t border-slate-200">
               <div class="flex justify-between text-slate-600">
                 <span>Subtotal</span>
-                <span class="font-semibold">${{ cartTotal.toFixed(2) }}</span>
+                <span class="font-semibold">${{ formatPrice(cartTotal) }}</span>
               </div>
               
               <div class="flex justify-between text-slate-600">
                 <span>Shipping</span>
-                <span class="font-semibold">{{ shipping === 0 ? 'FREE' : '$' + shipping.toFixed(2) }}</span>
+                <span class="font-semibold">{{ shipping === 0 ? 'FREE' : '$' + formatPrice(shipping) }}</span>
               </div>
               
               <div class="flex justify-between text-slate-600">
                 <span>Tax</span>
-                <span class="font-semibold">${{ tax.toFixed(2) }}</span>
+                <span class="font-semibold">${{ formatPrice(tax) }}</span>
               </div>
               
               <div class="border-t border-slate-200 pt-4">
                 <div class="flex justify-between text-lg font-bold text-slate-800">
                   <span>Total</span>
-                  <span>${{ finalTotal.toFixed(2) }}</span>
+                  <span>${{ formatPrice(finalTotal) }}</span>
                 </div>
               </div>
             </div>
@@ -261,6 +261,11 @@ const shipping = ref(9.99);
 const tax = ref(0);
 
 const defaultImage = 'https://via.placeholder.com/100x100?text=Product';
+
+const formatPrice = (value) => {
+  const price = Number(value);
+  return Number.isFinite(price) ? price.toFixed(2) : '0.00';
+};
 
 const form = ref({
   full_name: '',
@@ -313,13 +318,12 @@ const handleSubmit = async () => {
       total_amount: finalTotal.value
     };
 
-    await api.post('/orders', payload);
+    const response = await api.post('/orders', payload);
     
-    // Clear cart after successful order
-    await cartStore.clearCart();
+    cartStore.items = [];
     
     success('Order placed successfully!');
-    router.push({ name: 'Orders' });
+    router.push({ name: 'Orders', query: { order: response.data.order_id } });
   } catch (err) {
     console.error('Error placing order:', err);
     error.value = err.response?.data?.message || 'Failed to place order. Please try again.';

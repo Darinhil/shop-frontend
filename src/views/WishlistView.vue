@@ -59,7 +59,7 @@
                 {{ item.product_name }}
               </h3>
               <p class="text-sm text-slate-500 mb-2">{{ item.category_name || 'Uncategorized' }}</p>
-              <p class="text-lg font-bold text-primary-600">${{ (item.product_price || item.price).toFixed(2) }}</p>
+              <p class="text-lg font-bold text-primary-600">${{ formatPrice(item.product_price ?? item.price) }}</p>
             </router-link>
 
             <button
@@ -95,6 +95,11 @@ const items = ref([]);
 const loading = ref(true);
 
 const defaultImage = 'https://via.placeholder.com/300x300?text=Product';
+
+const formatPrice = (value) => {
+  const price = Number(value);
+  return Number.isFinite(price) ? price.toFixed(2) : '0.00';
+};
 
 const fetchWishlist = async () => {
   loading.value = true;

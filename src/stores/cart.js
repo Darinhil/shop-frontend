@@ -8,6 +8,22 @@ export const useCartStore = defineStore('cart', () => {
   const loading = ref(false);
   const { success, error: toastError } = useToast();
 
+  const normalizeCartItem = (item) => {
+    const product = item.product || {};
+    const productId = Number(item.product_id ?? product.id ?? item.id);
+    const price = Number(item.price ?? product.price ?? 0);
+    const quantity = Number(item.quantity ?? 1);
+
+    return {
+      ...item,
+      product_id: productId,
+      quantity: Number.isFinite(quantity) ? quantity : 1,
+      price: Number.isFinite(price) ? price : 0,
+      product_name: item.product_name ?? product.name ?? 'Unnamed product',
+      product_image: item.product_image ?? product.image ?? ''
+    };
+  };
+
   const cartCount = computed(() => items.value.reduce((total, item) => total + item.quantity, 0));
   const cartTotal = computed(() => items.value.reduce((total, item) => total + (item.price * item.quantity), 0));
 
@@ -15,7 +31,7 @@ export const useCartStore = defineStore('cart', () => {
     loading.value = true;
     try {
       const response = await api.get('/cart');
-      items.value = response.data;
+      items.value = (response.data || []).map(normalizeCartItem);
     } catch (error) {
       console.error('Error fetching cart:', error);
     } finally {
@@ -29,13 +45,14 @@ export const useCartStore = defineStore('cart', () => {
         product_id: productId,
         quantity: quantity
       });
+      const cartItem = normalizeCartItem(response.data);
       
       // Update local state with response
       const existingItemIndex = items.value.findIndex(item => item.product_id === productId);
       if (existingItemIndex !== -1) {
-        items.value[existingItemIndex].quantity = response.data.quantity;
+        items.value[existingItemIndex].quantity = cartItem.quantity;
       } else {
-        items.value.push(response.data);
+        items.value.push(cartItem);
       }
       
       success('Added to cart!');
@@ -57,7 +74,8 @@ export const useCartStore = defineStore('cart', () => {
         if (quantity === 0) {
           items.value.splice(itemIndex, 1);
         } else {
-          items.value[itemIndex].quantity = response.data.quantity;
+          const nextQuantity = Number(response.data.quantity);
+          items.value[itemIndex].quantity = Number.isFinite(nextQuantity) ? nextQuantity : quantity;
         }
       }
       

@@ -35,7 +35,7 @@
             <div class="flex-1 min-w-0">
               <h3 class="font-semibold text-slate-800 mb-1 truncate">{{ item.product_name }}</h3>
               <p class="text-sm text-slate-500 mb-2">{{ item.category || 'Product' }}</p>
-              <p class="text-lg font-bold text-primary-600">${{ item.price.toFixed(2) }}</p>
+              <p class="text-lg font-bold text-primary-600">${{ formatPrice(item.price) }}</p>
             </div>
 
             <div class="flex flex-col items-end gap-2">
@@ -72,7 +72,7 @@
             </div>
 
             <div class="text-right">
-              <p class="text-lg font-bold text-slate-800">${{ (item.price * item.quantity).toFixed(2) }}</p>
+              <p class="text-lg font-bold text-slate-800">${{ formatPrice(item.price * item.quantity) }}</p>
             </div>
           </div>
         </div>
@@ -85,23 +85,23 @@
             <div class="space-y-4 mb-6">
               <div class="flex justify-between text-slate-600">
                 <span>Subtotal ({{ cartCount }} items)</span>
-                <span class="font-semibold">${{ cartTotal.toFixed(2) }}</span>
+                <span class="font-semibold">${{ formatPrice(cartTotal) }}</span>
               </div>
               
               <div class="flex justify-between text-slate-600">
                 <span>Shipping</span>
-                <span class="font-semibold">{{ shipping === 0 ? 'FREE' : '$' + shipping.toFixed(2) }}</span>
+                <span class="font-semibold">{{ shipping === 0 ? 'FREE' : '$' + formatPrice(shipping) }}</span>
               </div>
               
               <div v-if="discount > 0" class="flex justify-between text-green-600">
                 <span>Discount</span>
-                <span class="font-semibold">-${{ discount.toFixed(2) }}</span>
+                <span class="font-semibold">-${{ formatPrice(discount) }}</span>
               </div>
               
               <div class="border-t border-slate-200 pt-4">
                 <div class="flex justify-between text-lg font-bold text-slate-800">
                   <span>Total</span>
-                  <span>${{ finalTotal.toFixed(2) }}</span>
+                  <span>${{ formatPrice(finalTotal) }}</span>
                 </div>
               </div>
             </div>
@@ -155,6 +155,11 @@ const discount = ref(0);
 const promoCode = ref('');
 
 const defaultImage = 'https://via.placeholder.com/100x100?text=Product';
+
+const formatPrice = (value) => {
+  const price = Number(value);
+  return Number.isFinite(price) ? price.toFixed(2) : '0.00';
+};
 
 const cartCount = computed(() => items.value.reduce((total, item) => total + item.quantity, 0));
 const cartTotal = computed(() => items.value.reduce((total, item) => total + (item.price * item.quantity), 0));

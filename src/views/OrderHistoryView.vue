@@ -100,7 +100,7 @@
               <!-- Order Items -->
               <div>
                 <h4 class="font-semibold text-slate-800 mb-4">Order Items</h4>
-                <div class="space-y-3">
+                <div v-if="order.items.length > 0" class="space-y-3">
                   <div
                     v-for="item in order.items"
                     :key="item.id"
@@ -117,9 +117,10 @@
                       <p class="font-medium text-slate-800">{{ item.product_name }}</p>
                       <p class="text-sm text-slate-500">Qty: {{ item.quantity }}</p>
                     </div>
-                    <p class="font-bold text-primary-600">${{ (item.price * item.quantity).toFixed(2) }}</p>
+                    <p class="font-bold text-primary-600">${{ formatPrice(item.price * item.quantity) }}</p>
                   </div>
                 </div>
+                <p v-else class="text-sm text-slate-500">No items found for this order.</p>
               </div>
 
               <!-- Order Summary & Shipping -->
@@ -129,19 +130,19 @@
                   <div class="space-y-2">
                     <div class="flex justify-between text-slate-600">
                       <span>Subtotal</span>
-                      <span>${{ (order.subtotal || 0).toFixed(2) }}</span>
+                      <span>${{ formatPrice(order.subtotal) }}</span>
                     </div>
                     <div class="flex justify-between text-slate-600">
                       <span>Shipping</span>
-                      <span>${{ (order.shipping_cost ||  0).toFixed(2) }}</span>
+                      <span>${{ formatPrice(order.shipping_cost) }}</span>
                     </div>
                     <div class="flex justify-between text-slate-600">
                       <span>Tax</span>
-                      <span>${{ (order.tax || 0).toFixed(2) }}</span>
+                      <span>${{ formatPrice(order.tax) }}</span>
                     </div>
                     <div class="flex justify-between text-lg font-bold text-slate-800 pt-2 border-t border-slate-200">
                       <span>Total</span>
-                      <span>${{ (order.total_amount || 0).toFixed(2) }}</span>
+                      <span>${{ formatPrice(order.total_amount) }}</span>
                     </div>
                   </div>
                 </div>
@@ -167,20 +168,47 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import api from '../api/axios';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 
+const route = useRoute();
 const orders = ref([]);
 const loading = ref(true);
 const expandedOrders = ref([]);
 
 const defaultImage = 'https://via.placeholder.com/100x100?text=Product';
 
+const formatPrice = (value) => {
+  const price = Number(value);
+  return Number.isFinite(price) ? price.toFixed(2) : '0.00';
+};
+
+const normalizeOrder = (order) => ({
+  ...order,
+  subtotal: Number(order.subtotal ?? 0),
+  shipping_cost: Number(order.shipping_cost ?? 0),
+  tax: Number(order.tax ?? 0),
+  total_amount: Number(order.total_amount ?? 0),
+  status: order.status || 'pending',
+  items: (order.items || []).map((item) => ({
+    ...item,
+    price: Number(item.price ?? 0),
+    quantity: Number(item.quantity ?? 1),
+    product_name: item.product_name || 'Unnamed product'
+  }))
+});
+
 const fetchOrders = async () => {
   loading.value = true;
   try {
     const response = await api.get('/orders');
-    orders.value = response.data || [];
+    orders.value = (response.data || []).map(normalizeOrder);
+
+    const selectedOrderId = Number(route.query.order);
+    if (Number.isFinite(selectedOrderId) && orders.value.some(order => order.id === selectedOrderId)) {
+      expandedOrders.value = [selectedOrderId];
+    }
   } catch (err) {
     console.error('Error fetching orders:', err);
   } finally {
@@ -204,7 +232,7 @@ const formatStatus = (status) => {
     delivered: 'Delivered',
     cancelled: 'Cancelled'
   };
-  return statusMap[status] || status.charAt(0).toUpperCase() + status.slice(1);
+  return statusMap[status] || 'Pending';
 };
 
 const getStatusBadgeClass = (status) => {

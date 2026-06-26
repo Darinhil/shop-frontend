@@ -8,11 +8,26 @@ export const useWishlistStore = defineStore('wishlist', () => {
   const loading = ref(false);
   const { success, error: toastError } = useToast();
 
+  const normalizeWishlistItem = (item) => {
+    const product = item.product || {};
+    const productId = Number(item.product_id ?? product.id ?? item.id);
+    const price = Number(item.product_price ?? item.price ?? product.price ?? 0);
+
+    return {
+      ...item,
+      product_id: productId,
+      product_name: item.product_name ?? product.name ?? 'Unnamed product',
+      product_price: Number.isFinite(price) ? price : 0,
+      product_image: item.product_image ?? product.image ?? '',
+      category_name: item.category_name ?? product.category?.name ?? null
+    };
+  };
+
   const fetchWishlist = async () => {
     loading.value = true;
     try {
       const response = await api.get('/wishlist');
-      items.value = response.data;
+      items.value = (response.data || []).map(normalizeWishlistItem);
     } catch (error) {
       console.error('Error fetching wishlist:', error);
     } finally {
@@ -28,7 +43,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
       
       // Check if already in wishlist to avoid duplicates
       if (!items.value.some(item => item.product_id === productId)) {
-        items.value.push(response.data);
+        items.value.push(normalizeWishlistItem(response.data));
       }
       
       success('Added to wishlist!');
