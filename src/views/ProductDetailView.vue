@@ -58,8 +58,8 @@
             <!-- Price -->
             <div class="flex items-center gap-3 mb-6">
               <span class="text-3xl font-bold text-primary-600">${{ discountedPrice }}</span>
-              <span v-if="product.discount" class="text-xl text-slate-400 line-through">${{ product.price }}</span>
-              <span v-if="product.discount" class="badge badge-danger">-{{ product.discount }}%</span>
+              <span v-if="hasDiscount" class="text-xl text-slate-400 line-through">${{ originalPrice }}</span>
+              <span v-if="hasDiscount" class="badge badge-danger">-{{ formattedDiscount }}%</span>
             </div>
 
             <!-- Stock Status -->
@@ -356,11 +356,33 @@ const productImages = computed(() => {
   return [product.value?.image || defaultImage];
 });
 
+const formatPrice = (value) => {
+  const price = Number(value);
+  return Number.isFinite(price) ? price.toFixed(2) : '0.00';
+};
+
+const formatDiscount = (value) => {
+  const discount = Number(value);
+  if (!Number.isFinite(discount)) return '0';
+  return discount.toFixed(2).replace(/\.?0+$/, '');
+};
+
+const productPrice = computed(() => Number(product.value?.price) || 0);
+
+const discountPercent = computed(() => Number(product.value?.discount) || 0);
+
+const hasDiscount = computed(() => discountPercent.value > 0);
+
+const formattedDiscount = computed(() => formatDiscount(discountPercent.value));
+
+const originalPrice = computed(() => formatPrice(productPrice.value));
+
 const discountedPrice = computed(() => {
-  if (product.value?.discount) {
-    return (product.value.price * (1 - product.value.discount / 100)).toFixed(2);
+  if (!hasDiscount.value) {
+    return originalPrice.value;
   }
-  return product.value?.price?.toFixed(2) || '0.00';
+
+  return formatPrice(productPrice.value * (1 - discountPercent.value / 100));
 });
 
 const inStock = computed(() => {

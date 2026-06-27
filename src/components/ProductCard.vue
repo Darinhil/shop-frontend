@@ -7,7 +7,7 @@
         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
       />
       <div class="absolute top-3 left-3 flex gap-2">
-        <span v-if="product.discount" class="badge badge-danger">-{{ product.discount }}%</span>
+        <span v-if="hasDiscount" class="badge badge-danger">-{{ formattedDiscount }}%</span>
         <span v-if="product.featured" class="badge badge-accent">Featured</span>
       </div>
       <button
@@ -42,7 +42,7 @@
       </div>
       <div class="flex items-center gap-2">
         <span class="text-xl font-bold text-primary-600">${{ discountedPrice }}</span>
-        <span v-if="product.discount" class="text-sm text-slate-400 line-through">${{ product.price }}</span>
+        <span v-if="hasDiscount" class="text-sm text-slate-400 line-through">${{ originalPrice }}</span>
       </div>
     </div>
   </div>
@@ -67,11 +67,33 @@ const wishlistStore = useWishlistStore()
 
 const defaultImage = 'https://via.placeholder.com/400x400?text=Product'
 
+const formatPrice = (value) => {
+  const price = Number(value)
+  return Number.isFinite(price) ? price.toFixed(1) : '0.00'
+}
+
+const formatDiscount = (value) => {
+  const discount = Number(value)
+  if (!Number.isFinite(discount)) return '0'
+  return discount.toFixed(2).replace(/\.?0+$/, '')
+}
+
+const productPrice = computed(() => Number(props.product.price) || 0)
+
+const discountPercent = computed(() => Number(props.product.discount) || 0)
+
+const hasDiscount = computed(() => discountPercent.value > 0)
+
+const formattedDiscount = computed(() => formatDiscount(discountPercent.value))
+
+const originalPrice = computed(() => formatPrice(productPrice.value))
+
 const discountedPrice = computed(() => {
-  if (props.product.discount) {
-    return (props.product.price * (1 - props.product.discount / 100)).toFixed(2)
+  if (!hasDiscount.value) {
+    return originalPrice.value
   }
-  return props.product.price.toFixed(2)
+
+  return formatPrice(productPrice.value * (1 - discountPercent.value / 100))
 })
 
 const isInWishlist = computed(() => {
@@ -82,9 +104,10 @@ const goToProduct = () => {
   router.push(`/products/${props.product.id}`)
 }
 
-const addToCart = () => {
-  cartStore.addToCart(props.product.id)
+const addToCart = async () => {
+  await cartStore.addToCart(props.product.id)
 }
+
 
 const toggleWishlist = () => {
   if (isInWishlist.value) {

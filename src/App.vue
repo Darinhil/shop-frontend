@@ -162,7 +162,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from './stores/auth';
 import { useCartStore } from './stores/cart';
 import { useWishlistStore } from './stores/wishlist';
@@ -170,6 +170,7 @@ import Toast from './components/Toast.vue';
 import { useToast } from './composables/useToast';
 
 const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
 const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
@@ -184,6 +185,7 @@ const showNavbar = computed(() => {
 const handleLogout = async () => {
   await authStore.logoutUser();
   mobileMenuOpen.value = false;
+  router.push({ name: 'Login' });
 };
 
 watch(() => authStore.isAuthenticated, (newVal) => {

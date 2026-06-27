@@ -1,9 +1,15 @@
 <template>
   <div class="home-view">
     <!-- Hero Banner -->
-    <section class="relative bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 overflow-hidden">
-      <div class="absolute inset-0 bg-black/20"></div>
-      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
+    <section class="hero-banner relative overflow-hidden bg-slate-950">
+      <img
+        src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1800&q=85"
+        alt=""
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 hero-overlay"></div>
+      <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent"></div>
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 min-h-[520px] flex items-center">
         <div class="text-center md:text-left md:max-w-2xl">
           <h1 class="text-4xl md:text-6xl font-bold text-white mb-6 animate-slide-up">
             Discover Your Perfect Style
@@ -20,9 +26,6 @@
             </router-link>
           </div>
         </div>
-      </div>
-      <div class="absolute bottom-0 right-0 w-1/2 h-full hidden lg:block">
-        <div class="absolute inset-0 bg-gradient-to-l from-transparent to-primary-600/50"></div>
       </div>
     </section>
 
@@ -248,5 +251,16 @@ onMounted(() => {
 <style scoped>
 .home-view {
   min-height: 100vh;
+}
+
+.hero-banner {
+  isolation: isolate;
+}
+
+.hero-overlay {
+  background:
+    linear-gradient(90deg, rgba(2, 6, 23, 0.92) 0%, rgba(15, 23, 42, 0.78) 42%, rgba(15, 23, 42, 0.28) 100%),
+    linear-gradient(135deg, rgba(14, 165, 233, 0.34) 0%, rgba(16, 185, 129, 0.18) 45%, rgba(244, 63, 94, 0.28) 100%);
+  mix-blend-mode: normal;
 }
 </style>

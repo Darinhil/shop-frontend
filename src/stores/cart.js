@@ -6,7 +6,9 @@ import { useToast } from '../composables/useToast';
 export const useCartStore = defineStore('cart', () => {
   const items = ref([]);
   const loading = ref(false);
+  const addInFlight = ref({}); // { [productId]: true }
   const { success, error: toastError } = useToast();
+
 
   const normalizeCartItem = (item) => {
     const product = item.product || {};
@@ -40,11 +42,18 @@ export const useCartStore = defineStore('cart', () => {
   };
 
   const addToCart = async (productId, quantity = 1) => {
+    const pid = Number(productId);
+    if (!Number.isFinite(pid) || pid <= 0) return;
+
+    if (addInFlight.value[pid]) return;
+    addInFlight.value[pid] = true;
+
     try {
       const response = await api.post('/cart', {
-        product_id: productId,
+        product_id: pid,
         quantity: quantity
       });
+
       const cartItem = normalizeCartItem(response.data);
       
       // Update local state with response
@@ -60,6 +69,8 @@ export const useCartStore = defineStore('cart', () => {
     } catch (error) {
       toastError(error.response?.data?.message || 'Failed to add to cart. Please login first.');
       throw error;
+    } finally {
+      delete addInFlight.value[pid];
     }
   };
 

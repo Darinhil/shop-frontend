@@ -33,12 +33,18 @@ export const useAuthStore = defineStore('auth', () => {
     syncAuthState();
   };
 
+  const setAuthenticatedSession = (session) => {
+    token.value = session.token;
+    user.value = session.user;
+    isAuthenticated.value = true;
+
+    localStorage.setItem('auth_token', session.token);
+    localStorage.setItem('auth_user', JSON.stringify(session.user));
+  };
+
   const loginUser = async (credentials) => {
     try {
       const response = await api.post('/login', credentials);
-
-      token.value = response.data.token;
-      isAuthenticated.value = true;
 
       // Persist first so axios interceptor can attach it to any follow-up requests
       localStorage.setItem('auth_token', response.data.token);
@@ -46,8 +52,10 @@ export const useAuthStore = defineStore('auth', () => {
       // Prefer fetching the canonical user from backend (sanctum-guarded)
       // This also verifies the token works.
       const profileResponse = await api.get('/user');
-      user.value = profileResponse.data;
-      localStorage.setItem('auth_user', JSON.stringify(profileResponse.data));
+      setAuthenticatedSession({
+        token: response.data.token,
+        user: profileResponse.data
+      });
 
       success('Welcome back! Login successful.');
       return { token: response.data.token, user: profileResponse.data };
@@ -67,7 +75,13 @@ export const useAuthStore = defineStore('auth', () => {
   const registerUser = async (userData) => {
     try {
       const response = await api.post('/register', userData);
-      success('Registration successful! Please login.');
+
+      setAuthenticatedSession({
+        token: response.data.token,
+        user: response.data.user
+      });
+
+      success('Account created. You are now logged in.');
       return response.data;
     } catch (error) {
       toastError(error.response?.data?.message || 'Registration failed. Please try again.');

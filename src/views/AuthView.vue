@@ -253,14 +253,14 @@ const handleRegister = async () => {
 
   try {
     await authStore.registerUser(registerForm.value);
-    successMessage.value = 'Registration successful! Please login with your credentials.';
-    isLogin.value = true;
     registerForm.value = {
       name: '',
       email: '',
       password: '',
       password_confirmation: ''
     };
+    agreeToTerms.value = false;
+    router.push({ name: 'Home' });
   } catch (err) {
     error.value = err.response?.data?.message || 'Registration failed. Please try again.';
   } finally {
